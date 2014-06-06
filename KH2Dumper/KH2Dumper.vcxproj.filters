@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="KH2Dumper.cpp" />
+    <ClCompile Include="BAR.cpp" />
+    <ClCompile Include="IDX.cpp" />
+    <ClCompile Include="Extra.cpp" />
+    <ClCompile Include="Event.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="BAR.h" />
+    <ClInclude Include="IDX.h" />
+    <ClInclude Include="Extra.h" />
+    <ClInclude Include="xstddef.h" />
+    <ClInclude Include="Event.h" />
+  </ItemGroup>
+</Project>
