@@ -1,11 +1,15 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30501.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KH2Dumper", "KH2Dumper\KH2Dumper.vcxproj", "{5A57229C-806D-4D05-9B3F-9E4E881554F9}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KH2PatchApply", "KH2PatchApply\KH2PatchApply.vcxproj", "{4584C128-F37F-40EC-98B9-563858280CF9}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KH2PatchCreator", "KH2PatchCreator\KH2PatchCreator.vcxproj", "{F5B7B038-67F9-4880-8FE1-B496CB05828D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libKh", "libKh\libKh.vcxproj", "{2F58FDB3-ECC9-4AC2-B335-DDC680EB837E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,6 +39,12 @@ Global
 		{F5B7B038-67F9-4880-8FE1-B496CB05828D}.Release|Win32.ActiveCfg = Release|Win32
 		{F5B7B038-67F9-4880-8FE1-B496CB05828D}.Release|Win32.Build.0 = Release|Win32
 		{F5B7B038-67F9-4880-8FE1-B496CB05828D}.Release|x64.ActiveCfg = Release|Win32
+		{2F58FDB3-ECC9-4AC2-B335-DDC680EB837E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2F58FDB3-ECC9-4AC2-B335-DDC680EB837E}.Debug|Win32.Build.0 = Debug|Win32
+		{2F58FDB3-ECC9-4AC2-B335-DDC680EB837E}.Debug|x64.ActiveCfg = Debug|Win32
+		{2F58FDB3-ECC9-4AC2-B335-DDC680EB837E}.Release|Win32.ActiveCfg = Release|Win32
+		{2F58FDB3-ECC9-4AC2-B335-DDC680EB837E}.Release|Win32.Build.0 = Release|Win32
+		{2F58FDB3-ECC9-4AC2-B335-DDC680EB837E}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

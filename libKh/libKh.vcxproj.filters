@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="KH2">
+      <UniqueIdentifier>{3dc73648-fe1f-4af1-9b4d-31144892504a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="IDX.h">
+      <Filter>KH2</Filter>
+    </ClInclude>
+    <ClInclude Include="xstddef.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="IDX.cpp">
+      <Filter>KH2</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

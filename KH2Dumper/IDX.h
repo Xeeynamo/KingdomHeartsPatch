@@ -23,9 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef unsigned char	u8;
-typedef unsigned short	u16;
-typedef unsigned int	u32;
+#include "../libKh/IDX.h"
 
 enum IDXOpenResults
 {
@@ -35,14 +33,6 @@ enum IDXOpenResults
 	INVALID = 0x80000003
 };
 
-struct IDXLBA
-{
-    unsigned int   namehash;	// 0x0
-    unsigned short unknow;		// 0x4
-    unsigned short blocksize;	// 0x6 if 0x4000 is compressed. File size is size&0x3FFF+1*0x400
-    unsigned int   offset;		// 0x8 offset*0x800
-    unsigned int   realsize;	// 0xC decompressed size
-};
 struct IDXOUTLIST
 {
 	char name[0x34];
@@ -68,7 +58,7 @@ public:
 	FILE *fIDX;
 	FILE *fIMG;
 	u32 entries;
-	IDXLBA *idx;
+	LIBKH::KH2::IDX::Entry *idx;
 	int found;
 
 	IDX();
@@ -82,13 +72,10 @@ public:
 	void  CreateList(bool, char *archiveName);
 
 	bool  AddFile(char *file, bool compress);
-	void *Decompress(void *buffer, unsigned int realsize, u32 blocksize);
-	void *Compress(void *buffer, unsigned int decsize, u32 *cmpsize);
 
 	u32   GetEntries();
 	u32   GetStringIndex(char *fileName);
 	void  AddIDX(char *filename);
-	u32   StringHash(char *string);
 	bool  ExtractFile(char *filename);
 	void  ExtractRemains();
 };

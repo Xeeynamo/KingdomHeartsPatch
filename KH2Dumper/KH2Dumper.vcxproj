@@ -123,6 +123,11 @@
     <ClInclude Include="IDX.h" />
     <ClInclude Include="xstddef.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\libKh\libKh.vcxproj">
+      <Project>{2f58fdb3-ecc9-4ac2-b335-ddc680eb837e}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

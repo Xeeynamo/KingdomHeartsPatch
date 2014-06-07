@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <windows.h>
 #include "PatchFS.h"
+#include "../libKh/IDX.h"
 
 char stmp[0x800];
 char *GetString()
@@ -53,113 +54,6 @@ int GetFileSize(FILE *f)
 	int size = ftell(f);
 	fseek(f, 0, SEEK_SET);
 	return size;
-}
-u32 StringHash(char *string)
-{
-	int c = -1;
-	char *check = string;
-	while(*check++);
-	if (check != string+1)
-	{
-		int stringSize = (int)strlen(string);
-		for(int i=0; i<stringSize; i++)
-		{
-			c ^= string[i] << 24;
-			for(int v=0; v<=7; v++)
-			{
-				if (c < 0)
-					c = 2 * c ^ 0x4C11DB7;
-				else
-					c *= 2;
-			}
-		}
-	}
-	return -1 - c;
-}
-void *Compress(void *buffer, unsigned int decsize, u32 *cmpsize)
-{
-	u8 *data = (u8*)malloc(decsize+5);
-	u8 *pbuf = (u8*)buffer;
-	u8 *pbufmax = pbuf+decsize;
-	u8 *pdata = data;
-
-	// Find key
-	u8 key;
-	int fkey[0x100];
-	memset(fkey, 0, 0x400);
-	while(pbuf<pbufmax)
-		fkey[*pbuf++]++;
-	for(int i=1, count = 0x7FFFFFFF; i<0x100; i++)
-	{
-		if (fkey[i] < count)
-		{
-			count = fkey[i];
-			key = i;
-		}
-	}
-
-	pbuf = (u8*)buffer;
-	int csize;
-	for(csize=0 ;pbuf<pbufmax;)
-	{
-READBYTE:
-		u8 d = *pbuf;
-		if (d == key)	// Dato uguale alla chiave
-		{
-			*pdata++ = 0;
-			*pdata++ = key;
-			csize += 2;
-			pbuf++;
-			goto READBYTE;
-		}
-		int mi = 0;
-		int matches = 0;
-		__int64 farmax = pbuf+0x100 < pbufmax ? 0x100 : pbufmax-pbuf;
-		for(int i=1; i<farmax; i++)
-		{
-			for(int j=i, m=0; j<farmax; j++)
-			{
-				if (pbuf[j-i] == pbuf[j])
-				{
-					m++;
-					if (j+1 == farmax)
-						goto COMPRESS;
-				}
-				else
-				{
-COMPRESS:
-					if (matches <= m)
-					{
-						matches = m;
-						mi = i;
-					}
-					break;
-				}
-			}
-		}
-		if (matches > 3)
-		{
-			*pdata++ = matches-3;
-			*pdata++ = mi;	// Default 1
-			*pdata++ = key;
-			csize += 3;
-			pbuf += matches;
-		}
-		else
-		{
-			pbuf++;
-			*pdata++ = d;
-			csize++;
-		}
-	}
-	*pdata++ = (decsize&0xFF000000)>>24;
-	*pdata++ = (decsize&0x00FF0000)>>16;
-	*pdata++ = (decsize&0x0000FF00)>> 8;
-	*pdata++ = (decsize&0x000000FF)>> 0;
-	*pdata++ = key;
-	csize += 5;
-	*cmpsize = csize;
-	return data;
 }
 
 void Enc(void *data, int size)
@@ -283,11 +177,11 @@ BESERIOUS_HELPS:
 		printf("Patch this file: ");
 		char path[64];
 		strcpy(path, GetString());
-		lba[i].hash = StringHash(path);
+		lba[i].hash = LIBKH::KH2::IDX::CalculateHash32(path);
 		printf("Internal archive (like 000tt.idx): ");
-		lba[i].hasharc = StringHash(GetString());
+		lba[i].hasharc = LIBKH::KH2::IDX::CalculateHash32(GetString());
 		printf("Relink with this file (no text, no relink): ");
-		lba[i].relink = StringHash(GetString());
+		lba[i].relink = LIBKH::KH2::IDX::CalculateHash32(GetString());
 		if (lba[i].relink == 0)
 		{
 BESERIOUS_COMPRESS:
@@ -306,9 +200,9 @@ BESERIOUS_COMPRESS:
 			fread(data, fInSize, 1, fIn);
 			fclose(fIn);
 			lba[i].realsize = fInSize;
-			if (selection)
-				data = Compress(data, lba[i].realsize, &fInSize);
-			lba[i].SetSize(fInSize, selection);
+			if (selection != 0)
+				data = LIBKH::KH2::IDX::Compress(data, fInSize, lba[i].realsize);
+			lba[i].SetSize(fInSize, selection != 0);
 			lba[i].pos = ftell(f);
 			fwrite(data, lba[i].sizecmp, 1, f);
 			free(data);

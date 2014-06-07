@@ -181,7 +181,7 @@ int main(int argc, char *argv[])
 	u32 dummyID;
 	for(u32 j=0; j<idx.entries; j++)
 	{
-		if (idx.idx[j].namehash == 0x10303F6F)
+		if (idx.idx[j].hash1 == 0x10303F6F)
 		{
 			dummyID = j;
 			WriteEmptyBlock(&idx, j);
@@ -201,7 +201,7 @@ int main(int argc, char *argv[])
 		{
 			for(u32 j=0; j<idx.entries; j++)
 			{
-				if (patchlba[i].hasharc == idx.idx[j].namehash)
+				if (patchlba[i].hasharc == idx.idx[j].hash1)
 				{
 					idxarcOffset = isolbaIMG + idx.idx[j].offset;
 					idx.LoadIDX(idxarcOffset);
@@ -214,15 +214,15 @@ int main(int argc, char *argv[])
 GOGOGO:
 		for(u32 j=0; j<idx.entries; j++)
 		{
-			if (patchlba[i].hash == idx.idx[j].namehash)
+			if (patchlba[i].hash == idx.idx[j].hash1)
 			{
 				if (patchlba[i].relink != 0)
 				{
 					for(u32 k=0; k<idx.entries; k++)
 					{
-						if (patchlba[i].relink == idx.idx[j].namehash)
+						if (patchlba[i].relink == idx.idx[j].hash1)
 						{
-							idx.idx[j].unknow = idx.idx[k].unknow;
+							idx.idx[j].hash2 = idx.idx[k].hash2;
 							idx.idx[j].blocksize = idx.idx[k].blocksize;
 							idx.idx[j].offset = idx.idx[k].offset;
 							idx.idx[j].realsize = idx.idx[k].realsize;
@@ -282,7 +282,7 @@ GOGOGO:
 							{
 								if (newblocksize <= spx->size)
 								{
-									WriteBlock(&idx, j, patchHead->GetFile(i), spx->pos, patchlba[i].sizecmp, patchlba[i].realsize, (bool)patchlba[i].compressed);
+									WriteBlock(&idx, j, patchHead->GetFile(i), spx->pos, patchlba[i].sizecmp, patchlba[i].realsize, (bool)patchlba[i].IsCompressed());
 									spx->pos = idx.idx[j].offset + newblocksize + 1;
 									spx->size -= newblocksize;
 									break;
@@ -297,7 +297,7 @@ GOGOGO:
 								{
 									u32 newoffset = idx.idx[dummyID].offset;
 									idx.LoadIDX(idxarcOffset);
-									WriteBlockSpecial(&idx, j, patchHead->GetFile(i), newoffset, patchlba[i].sizecmp, patchlba[i].realsize, (bool)patchlba[i].compressed);
+									WriteBlockSpecial(&idx, j, patchHead->GetFile(i), newoffset, patchlba[i].sizecmp, patchlba[i].realsize, (bool)patchlba[i].IsCompressed());
 									idx.LoadIDX(isolbaIDX);
 									idx.idx[dummyID].blocksize -= newblocksize;
 									idx.idx[dummyID].offset += newblocksize + 1;

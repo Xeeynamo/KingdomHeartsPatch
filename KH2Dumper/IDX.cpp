@@ -17,9 +17,6 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110 - 1301, USA.
 
 #include "IDX.h"
-/*#define wmalloc(size) HeapAlloc(GetProcessHeap(), 0, size)
-#define wrealloc(p, size) HeapReAlloc(GetProcessHeap(), 0, p, size)
-#define wfree(p) { HeapFree(GetProcessHeap(), 0, p); p = NULL; }*/
 
 unsigned int HexToDec(char* s)
 {
@@ -72,7 +69,7 @@ u32 IDX::Create(char *archiveName, int howentries)
 		if (!(fIMG = fopen(realarchivenames, "w+b"))) return 0x80000002;
 
 	entries = 0;
-	idx = (IDXLBA*)malloc(howentries * sizeof(IDXLBA));
+	idx = (LIBKH::KH2::IDX::Entry*)malloc(howentries * sizeof(LIBKH::KH2::IDX::Entry));
 	return 0;
 }
 u32 IDX::Open(char *archiveName)
@@ -88,28 +85,28 @@ u32 IDX::Open(char *archiveName)
 	fseek(fIDX, 0, SEEK_SET);
 
 	fread(&entries, 4, 1, fIDX);
-	if (fIDXSize != entries*sizeof(IDXLBA) + 4)
+	if (fIDXSize != entries*sizeof(LIBKH::KH2::IDX::Entry) + 4)
 	{
 		Close();
 		return 0x80000003;
 	}
 	found = 0;
 
-	idx = (IDXLBA*)malloc(entries * sizeof(IDXLBA));
-	fread(idx, sizeof(IDXLBA), entries, fIDX);
+	idx = (LIBKH::KH2::IDX::Entry*)malloc(entries * sizeof(LIBKH::KH2::IDX::Entry));
+	fread(idx, sizeof(LIBKH::KH2::IDX::Entry), entries, fIDX);
 	return 0;
 }
 u32 IDX::Open(void *data, FILE *img)
 {
 	entries = *((int*)data);
-	idx = (IDXLBA*)(((int*)data)+1);
+	idx = (LIBKH::KH2::IDX::Entry*)(((int*)data) + 1);
 	return 0;
 }
 void IDX::Save()
 {
 	fseek(fIDX, 0, SEEK_SET);
 	fwrite(&entries, 4, 1, fIDX);
-	fwrite(idx, sizeof(IDXLBA), entries, fIDX);
+	fwrite(idx, sizeof(LIBKH::KH2::IDX::Entry), entries, fIDX);
 	free(idx);
 	fflush(fIDX);
 	fflush(fIMG);
@@ -140,91 +137,6 @@ void IDX::CreateList(bool list, char *archiveName)
 	}
 }
 
-void *IDX::Compress(void *buffer, unsigned int decsize, u32 *cmpsize)
-{
-	u8 *data = (u8*)malloc(decsize);
-	u8 *pbuf = (u8*)buffer;
-	u8 *pbufmax = pbuf+decsize;
-	u8 *pdata = data;
-
-	// Find key
-	u8 key;
-	int fkey[0x100];
-	memset(fkey, 0, 0x400);
-	while(pbuf<pbufmax)
-		fkey[*pbuf++]++;
-	for(int i=1, count = 0x7FFFFFFF; i<0x100; i++)
-	{
-		if (fkey[i] < count)
-		{
-			count = fkey[i];
-			key = i;
-		}
-	}
-
-	pbuf = (u8*)buffer;
-	int csize;
-	for(csize=0 ;pbuf<pbufmax;)
-	{
-READBYTE:
-		u8 d = *pbuf;
-		if (d == key)	// Dato uguale alla chiave
-		{
-			*pdata++ = 0;
-			*pdata++ = key;
-			csize += 2;
-			pbuf++;
-			goto READBYTE;
-		}
-		int mi = 0;
-		int matches = 0;
-		__int64 farmax = pbuf+0x100 < pbufmax ? 0x100 : pbufmax-pbuf;
-		for(int i=1; i<farmax; i++)
-		{
-			for(int j=i, m=0; j<farmax; j++)
-			{
-				if (pbuf[j-i] == pbuf[j])
-				{
-					m++;
-					if (j+1 == farmax)
-						goto COMPRESS;
-				}
-				else
-				{
-COMPRESS:
-					if (matches <= m)
-					{
-						matches = m;
-						mi = i;
-					}
-					break;
-				}
-			}
-		}
-		if (matches > 3)
-		{
-			*pdata++ = matches-3;
-			*pdata++ = mi;	// Default 1
-			*pdata++ = key;
-			csize += 3;
-			pbuf += matches;
-		}
-		else
-		{
-			pbuf++;
-			*pdata++ = d;
-			csize++;
-		}
-	}
-	*pdata++ = (decsize&0xFF000000)>>24;
-	*pdata++ = (decsize&0x00FF0000)>>16;
-	*pdata++ = (decsize&0x0000FF00)>> 8;
-	*pdata++ = (decsize&0x000000FF)>> 0;
-	*pdata++ = key;
-	csize += 5;
-	*cmpsize = csize;
-	return data;
-}
 bool IDX::AddFile(char *filename, bool compress)
 {
 	char path[MAX_PATH];
@@ -240,20 +152,20 @@ bool IDX::AddFile(char *filename, bool compress)
 	fread(data, 1, fSize, f);
 	fclose(f);
 
-	idx[entries].namehash = StringHash(filename);
+	idx[entries].hash1 = LIBKH::KH2::IDX::CalculateHash32(filename);
+	idx[entries].hash2 = LIBKH::KH2::IDX::CalculateHash16(filename);
 	idx[entries].realsize = fSize;
-	idx[entries].unknow = 0;
     if (filename[0] == '@')
 	{
 		char *fnamex = filename;
 		while(*fnamex++);
 		while(*--fnamex != '/');
-        idx[entries].namehash = HexToDec(++fnamex);
+		idx[entries].hash1 = HexToDec(++fnamex);
 	}
 	if (compress)
 	{
 		u32 compressSize;
-		void *compress = Compress(data, fSize, &compressSize);
+		void *compress = LIBKH::KH2::IDX::Compress(data, compressSize, fSize);
 		free(data);
 		fSize = compressSize;
 		data = compress;
@@ -311,73 +223,15 @@ void IDX::AddIDX(char *filename)
 	entries += addedEntries;
 	fclose(f);*/
 }
-u32 IDX::StringHash(char *string)
-{
-    int c = -1;
-    char *check = string;
-    while(*check++);
-    if (check != string+1)  // La stringa non può essere più piccola di 1 byte
-    {
-        int stringSize = (int)strlen(string);
-        for(int i=0; i<stringSize; i++)
-        {
-            c ^= string[i] << 24;
-            for(int v=0; v<=7; v++)
-            {
-                if (c < 0)
-                    c = 2 * c ^ 0x4C11DB7;
-                else
-                    c *= 2;
-            }
-        }
-    }
-    return -1 - c;
-}
-void *IDX::Decompress(void *buffer, unsigned int realsize, u32 cmpsize)
-{
-	u8 *data = (u8*)malloc(realsize);
-	u8 *pbuf = (u8*)buffer + cmpsize;
-	while(!*--pbuf);
-	u8 *pdata = data + realsize;
-	int key = *pbuf;
-	for(pbuf=pbuf-5; (pbuf>buffer) || (pdata>data); pbuf--)
-	{
-		if (pdata < data) return data;
-		if (pbuf - (u8*)buffer < 8)
-		{
-			data = data;
-		}
-		u8 d = *pbuf;
-		if (d == key)
-		{
-			int copypos = *(--pbuf);
-			if (!copypos)	// Accade quando il byte da copiare è uguale alla chiave
-				goto WRITE;
-			u8 *pzdata = pdata + copypos;
-			int count = *(--pbuf) + 3;
-			for(int i=0; i<count; i++)
-			{
-				if (pzdata >= data)	// Questo permette di non andare underflow nel puntatore
-				{
-					*--pdata = *(--pzdata);
-				}
-			}
-		}
-		else
-		{
-WRITE:
-			*--pdata = d;
-		}
-	}
-	return data;
-}
 u32 IDX::GetStringIndex(char *fileName)
 {
-    unsigned int hash = StringHash(fileName);
+	u32 hash1 = LIBKH::KH2::IDX::CalculateHash32(fileName);
+	u32 hash2 = LIBKH::KH2::IDX::CalculateHash16(fileName);
     u32 index = 0;
     while(true)
     {
-        if (idx[index].namehash == hash) return index;
+        if (idx[index].hash1 == hash1 &&
+			idx[index].hash2 == hash2) return index;
         if (++index == entries) return -1;
     }
 }
@@ -410,7 +264,7 @@ u32 IDX::ExtractFileLL(void **buffer, int *size, char *fileName)
 
         if (idx[index].blocksize & 0x4000)   // IS COMPRESSED
         {
-			void *decbuffer = Decompress(*buffer, idx[index].realsize, blockSize);
+			void *decbuffer = LIBKH::KH2::IDX::Decompress(*buffer, idx[index].realsize, blockSize);
 			if (decbuffer != *buffer) free(*buffer);
 			*buffer = decbuffer;
 			*size = idx[index].realsize;
@@ -543,7 +397,7 @@ void IDX::ExtractRemains()
 					ext = "bin";
 				}
 
-				sprintf(fileName, "@noname/%08X.%s", idx[i].namehash, ext);
+				sprintf(fileName, "@noname/%08X.%s", idx[i].hash1, ext);
 				sprintf(filePath, "export/%s", fileName);
 				FILE *fOut = fopen(filePath, "wb");
 				if (!fOut)
